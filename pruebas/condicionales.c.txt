@@ -1,0 +1,9 @@
+NOMBRE, TIPO, VARIABLE O FUNCION.
+	main, 295, Funcion
+	suich, 295, Funcion
+	z, 299, Variable
+	y, 299, Variable
+	x, 299, Variable
+	c, 295, Variable
+	b, 295, Variable
+	a, 295, Variable

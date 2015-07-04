@@ -1,0 +1,13 @@
+NOMBRE, TIPO, VARIABLE O FUNCION.
+	main, 295, Funcion
+	j, 295, Variable
+	i, 295, Variable
+	proced, 302, Funcion
+	suma, 295, Variable
+	d, 295, Variable
+	c, 295, Variable
+	funcion, 295, Funcion
+	b, 295, Variable
+	a, 295, Variable
+	test, 295, Funcion
+	variable, 295, Variable
