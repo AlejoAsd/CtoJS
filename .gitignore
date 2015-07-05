@@ -1,3 +1,5 @@
+*.js
+*.c.txt
 lex.yy.c
 traductor.exe
 traductor.tab.c

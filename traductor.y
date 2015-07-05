@@ -36,6 +36,7 @@ symrec *sym_table = (symrec *)0;
 symrec *s;
 symrec *symtable_set_type;
 
+int esFuncion=0;
 // Booleano cuando se encuentra error 
 int sin_error=1;
 // Manejo de corchetes para vectores
@@ -64,7 +65,8 @@ int cant_corchetes=0;
 %token <tipo> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOID
 
 %type <tipo> type_specifier declaration_specifiers type_qualifier
-%type <nombre> direct_declarator declarator init_declarator init_declarator_list function_definition parameter_type_list parameter_list parameter_declaration
+%type <nombre> direct_declarator declarator init_declarator init_declarator_list function_definition 
+%type <nombre> parameter_type_list parameter_list parameter_declaration array_list array_declaration
 %type <tptr> declaration 
 
 %left INC_OP DEC_OP
@@ -80,7 +82,7 @@ int cant_corchetes=0;
 primary_expression
 	/* En caso de ser un identificador, ya guarda el mismo identificador en el archivo */
 	: IDENTIFIER { fprintf(yysalida, "%s", yytext); }
-	| CONSTANT { if (!tam_vector) fprintf(yysalida, "%s", yytext); else tam_vector=0; }
+	| CONSTANT { fprintf(yysalida, "%s", yytext); }
 	| '(' { fprintf(yysalida, "( "); } expression ')' { fprintf(yysalida, " )"); }
 	;
 	
@@ -259,12 +261,12 @@ init_declarator
 		s = getsym($1);
 		if (s==(symrec *)0)
 		{
-			printf("Empty variable declarator.\n");
+			//printf("Empty variable declarator.\n");
 			s = putsym($1, -1, 0);
 		}
 		else
 		{
-			printf("Error: Variable declarada anteriormente.\n");
+			//printf("Error: Variable declarada anteriormente.\n");
 			yyerrok;	
 		}
 	}
@@ -273,12 +275,12 @@ init_declarator
 		s = getsym($1);
 		if(s==(symrec *)0)
 		{
-			printf("Non empty variable declarator.\n");
+			//printf("Non empty variable declarator.\n");
 			s = putsym($1, -1, 0);
 		}
 		else
 		{
-			printf("Error: Variable declarada anteriormente.\n");
+			//printf("Error: Variable declarada anteriormente.\n");
 			yyerrok;	
 		}
 	}
@@ -298,27 +300,25 @@ type_specifier
 	;
 
 declarator
-	: direct_declarator {$$=$1;}
+	: direct_declarator
 	;
 
-/*direct_declarator
-	: IDENTIFIER { if (boolFuncion){ fprintf(yysalida, "function %s", yytext); boolFuncion=0; } else fprintf(yysalida, "var %s", yytext); $$=$1; } //TAG: agregamos var a todo lo que no sea funcion
-	| direct_declarator '[' { tam_vector=1; if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
-	 constant_expression ']' { corchete=1; }
-	| direct_declarator '['  { if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
-	  ']' { corchete=1; }
-	| direct_declarator '(' { fprintf(yysalida, "( "); } ')' { fprintf(yysalida, " )"); }
-	| direct_declarator '(' { fprintf(yysalida, "( "); } parameter_type_list ')' { fprintf(yysalida, " )"); }
-	;*/
-
 direct_declarator
-	: IDENTIFIER { fprintf(yysalida, "var %s", $1); }
-	| IDENTIFIER '[' { tam_vector=1; if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
-	 constant_expression ']' { corchete=1; }
-	| IDENTIFIER '['  { if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
-	  ']' { corchete=1; }
-	| IDENTIFIER '(' ')' { fprintf(yysalida, "function %s()", $1); }
-	| IDENTIFIER '(' parameter_type_list ')' { fprintf(yysalida, "function %s(%s)", $1, $3); }
+	: IDENTIFIER { if (!esFuncion) fprintf(yysalida, "var %s", $1); else esFuncion = 0; }
+	| IDENTIFIER array_declaration { if (!esFuncion) fprintf(yysalida, "var %s = []", $1); else esFuncion = 0; }
+	| IDENTIFIER array_list { if (!esFuncion) fprintf(yysalida, "var %s = [%s]", $1, $2); else esFuncion = 0; }
+	| IDENTIFIER '(' ')' { if (!esFuncion) fprintf(yysalida, "function %s()", $1); else esFuncion = 0; }
+	| IDENTIFIER '(' parameter_type_list ')' { if (!esFuncion) fprintf(yysalida, "function %s(%s)", $1, $3); else esFuncion = 0; }
+	;
+
+array_list
+	: array_declaration
+	| array_list array_declaration { asprintf(&$$, "%s,%s", $1, $2); }
+	;
+
+array_declaration
+	: '[' ']' { asprintf(&$$, "[]"); }
+	| '[' CONSTANT ']' { asprintf(&$$, "[]"); }
 	;
 
 parameter_type_list
@@ -327,26 +327,26 @@ parameter_type_list
 
 parameter_list
 	: parameter_declaration
-	| parameter_list ',' parameter_declaration { sprintf($$, "%s, %s", $1, $3); }
+	| parameter_list ',' parameter_declaration { asprintf(&$$, "%s, %s", $1, $3); }
 	;
 
 parameter_declaration
-	: declaration_specifiers IDENTIFIER
+	: { esFuncion = 1; } declaration_specifiers declarator
 	{
-		s = getsym($2);
+		s = getsym($3);
 	    if(s==(symrec *)0)
 	    {
-	        printf("Parameter_declaration.\n");
-	        s = putsym($2, $1, 0);
+	        //printf("Parameter_declaration.\n");
+	        s = putsym($3, $2, 0);
 	    }
 	    else
 	    {
 	        printf("Error: Variable declarada anteriormente.\n");
 	        yyerrok;
 	    }
-	    $$ = $2;
+	    $$ = $3;
 	}
-	| declaration_specifiers
+	//| declaration_specifiers
 	;
 
 initializer_list
@@ -437,12 +437,12 @@ function_definition
 		s = getsym($2);
 		if(s==(symrec *)0)
 		{
-			printf("Function_definition.\n");
+			//printf("Function_definition.\n");
 			s = putsym($2,$1,1);
 		}
 		else
 		{
-			printf("Error: Funcion declarada anteriormente.");
+			//printf("Error: Funcion declarada anteriormente.");
 			yyerrok;
 		}
 	}
@@ -473,9 +473,9 @@ symrec * putsym(sym_name, sym_type, b_function)
 	int b_function;
 {
 	//Solo para debug
-	printf("\t%s, %d, %d\n", sym_name,
+	/*printf("\t%s, %d, %d\n", sym_name,
 			sym_type, 
-			b_function);
+			b_function);*/
 
 	symrec *ptr;
 	ptr = (symrec *) malloc(sizeof(symrec));
@@ -495,7 +495,7 @@ symrec * getsym(sym_name)
 	for(ptr = sym_table; ptr != (symrec*)0; ptr = (symrec *)ptr->next)
 		if(strcmp(ptr->name, sym_name) == 0)
 		{
-			printf("simbolo: %s\n", ptr->name);
+			//printf("simbolo: %s\n", ptr->name);
 			return ptr;
 		}
 	return 0;
@@ -572,7 +572,7 @@ int main(int argc,char **argv)
 	else
 		printf("\nNo se pudo finalizar la traducción.\n");
 
-	FILE *simbolos;
+	/*FILE *simbolos;
 	strcat(argv[1], ".txt");
 	simbolos=fopen(argv[1], "w+");
 	symrec * ptr_table;
@@ -583,7 +583,7 @@ int main(int argc,char **argv)
 			ptr_table->type, 
 			tipo_var(ptr_table->function));
 	}
+	fclose(simbolos);*/
 
-	fclose(simbolos);
 	return 0;
 }

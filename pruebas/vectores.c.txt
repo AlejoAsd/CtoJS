@@ -1,4 +1,0 @@
-NOMBRE, TIPO, VARIABLE O FUNCION.
-	c, 295, Variable
-	b, 295, Variable
-	a, 295, Variable
