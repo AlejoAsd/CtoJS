@@ -3,7 +3,24 @@
 %{
 #include <stdio.h>
 #include <string.h>
-#include "symtable.h"
+
+/*Data type for links in the chain of symbols*/
+struct symrec
+{
+	char *name;			/* name of symbol */
+	int type;			/* type of symbol */
+	double value;				/* value of a VAR */
+	int function;
+	struct symrec *next;		/* link field */
+};
+
+typedef struct symrec symrec;
+
+/*The symbol table: a chain of 'struct symrec'*/
+extern symrec *sym_table;
+
+symrec *putsym ();
+symrec *getsym ();
 
 extern int yylex(void);
 // Archivo fuente a ser traducido
@@ -522,7 +539,7 @@ int main(int argc,char **argv)
 	/* Debe tener 3 parametros, ejecutable.exe /path/to/fuente.c /path/to/objeto.js */
 	if (argc<3)
 	{
-		printf("Modo incorrecto de uso\n Forma correcta => %s archivo.c archivo.js\n", argv[0]);
+		printf("Modo incorrecto de uso\nSintaxis: %s archivo.c archivo.js\n", argv[0]);
 		return 0;
 	}
 	if ((yyin = fopen(argv[1],"rt")) == NULL) /*  */

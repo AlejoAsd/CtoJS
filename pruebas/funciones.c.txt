@@ -6,8 +6,13 @@ NOMBRE, TIPO, VARIABLE O FUNCION.
 	suma, 295, Variable
 	d, 295, Variable
 	c, 295, Variable
+	variable5, 295, Variable
+	variable4, 295, Variable
 	funcion, 295, Funcion
 	b, 295, Variable
 	a, 295, Variable
+	variable6, 295, Variable
+	variable3, 295, Variable
 	test, 295, Funcion
+	variable2, 295, Variable
 	variable, 295, Variable
