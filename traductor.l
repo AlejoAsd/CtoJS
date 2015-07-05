@@ -15,7 +15,24 @@ IS          (u|U|l|L)*
 #include <ctype.h>
 
 #include "traductor.tab.h"
-#include "symtable.h"
+
+/*Data type for links in the chain of symbols*/
+struct symrec
+{
+    char *name;         /* name of symbol */
+    int type;           /* type of symbol */
+    double value;               /* value of a VAR */
+    int function;
+    struct symrec *next;        /* link field */
+};
+
+typedef struct symrec symrec;
+
+/*The symbol table: a chain of 'struct symrec'*/
+extern symrec *sym_table;
+
+symrec *putsym ();
+symrec *getsym ();
 
 int yylineno;
 void comentario(void);

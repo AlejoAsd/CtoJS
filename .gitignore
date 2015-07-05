@@ -1,0 +1,4 @@
+lex.yy.c
+traductor.exe
+traductor.tab.c
+traductor.tab.h

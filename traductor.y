@@ -36,8 +36,6 @@ symrec *sym_table = (symrec *)0;
 symrec *s;
 symrec *symtable_set_type;
 
-// Booleano cuando se encuentra funciones 
-int boolFuncion=0;
 // Booleano cuando se encuentra error 
 int sin_error=1;
 // Manejo de corchetes para vectores
@@ -66,7 +64,7 @@ int cant_corchetes=0;
 %token <tipo> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOID
 
 %type <tipo> type_specifier declaration_specifiers type_qualifier
-%type <nombre> direct_declarator declarator init_declarator init_declarator_list function_definition
+%type <nombre> direct_declarator declarator init_declarator init_declarator_list function_definition parameter_type_list parameter_list parameter_declaration
 %type <tptr> declaration 
 
 %left INC_OP DEC_OP
@@ -303,8 +301,7 @@ declarator
 	: direct_declarator {$$=$1;}
 	;
 
-direct_declarator
-	/*TODO: Si es la declaracion de una funcion, pone FUNCTION YYTEXT, si es parametro pone YYTEXT, si es variable pone var YYTEXT */
+/*direct_declarator
 	: IDENTIFIER { if (boolFuncion){ fprintf(yysalida, "function %s", yytext); boolFuncion=0; } else fprintf(yysalida, "var %s", yytext); $$=$1; } //TAG: agregamos var a todo lo que no sea funcion
 	| direct_declarator '[' { tam_vector=1; if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
 	 constant_expression ']' { corchete=1; }
@@ -312,6 +309,16 @@ direct_declarator
 	  ']' { corchete=1; }
 	| direct_declarator '(' { fprintf(yysalida, "( "); } ')' { fprintf(yysalida, " )"); }
 	| direct_declarator '(' { fprintf(yysalida, "( "); } parameter_type_list ')' { fprintf(yysalida, " )"); }
+	;*/
+
+direct_declarator
+	: IDENTIFIER { fprintf(yysalida, "var %s", $1); }
+	| IDENTIFIER '[' { tam_vector=1; if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
+	 constant_expression ']' { corchete=1; }
+	| IDENTIFIER '['  { if (!cant_corchetes) fprintf(yysalida, "=new Array( "); cant_corchetes=1; }
+	  ']' { corchete=1; }
+	| IDENTIFIER '(' ')' { fprintf(yysalida, "function %s()", $1); }
+	| IDENTIFIER '(' parameter_type_list ')' { fprintf(yysalida, "function %s(%s)", $1, $3); }
 	;
 
 parameter_type_list
@@ -320,16 +327,16 @@ parameter_type_list
 
 parameter_list
 	: parameter_declaration
-	| parameter_list ',' { fprintf(yysalida, ", "); } parameter_declaration
+	| parameter_list ',' parameter_declaration { sprintf($$, "%s, %s", $1, $3); }
 	;
 
 parameter_declaration
-	: declaration_specifiers declarator
+	: declaration_specifiers IDENTIFIER
 	{
 		s = getsym($2);
 	    if(s==(symrec *)0)
 	    {
-	        printf("Parameter_declaration.\n");	    	
+	        printf("Parameter_declaration.\n");
 	        s = putsym($2, $1, 0);
 	    }
 	    else
@@ -337,6 +344,7 @@ parameter_declaration
 	        printf("Error: Variable declarada anteriormente.\n");
 	        yyerrok;
 	    }
+	    $$ = $2;
 	}
 	| declaration_specifiers
 	;
@@ -419,7 +427,7 @@ jump_statement
 	;
 
 external_declaration
-	: function_definition { boolFuncion=1; }
+	: function_definition
 	| declaration 
 	;
 
