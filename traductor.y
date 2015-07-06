@@ -242,32 +242,7 @@ init_declarator_list
 
 init_declarator
 	: declarator
- 	{
-		s = getsym($1);
-		if (s==(symrec *)0)
-		{
-			s = putsym($1, -1, 0);
-		}
-		else
-		{
-			printf("Error: Variable declarada anteriormente.\n");
-			yyerrok;	
-		}
-	}
-	| init_direct_declarator	
-	{
-		s = getsym($1);
-		if(s==(symrec *)0)
-		{
-			s = putsym($1, -1, 0);
-		}
-		else
-		{
-			printf("Error: Variable declarada anteriormente.\n");
-			yyerrok;	
-		}
-	}
-	'=' initializer { fprintf(yysalida, "%s", $4); }
+	| init_direct_declarator '=' initializer { fprintf(yysalida, "%s", $3); }
 	;
 
 type_specifier
@@ -320,20 +295,7 @@ parameter_list
 	;
 
 parameter_declaration
-	: { esFuncion = 1; } declaration_specifiers declarator
-	{
-		s = getsym($3);
-	    if(s==(symrec *)0)
-	    {
-	        s = putsym($3, $2, 0);
-	    }
-	    else
-	    {
-	        printf("Error: Variable declarada anteriormente.\n");
-	        yyerrok;
-	    }
-	    $$ = $3;
-	}
+	: { esFuncion = 1; } declaration_specifiers declarator { $$ = $3; }
 	//| declaration_specifiers
 	;
 

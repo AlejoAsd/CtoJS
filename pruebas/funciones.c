@@ -22,6 +22,7 @@ int variable5;
 
 void proced(int c, int d){
 	int suma;
+	int variable1;
 	suma = funcion(c, d);
 	return suma;
 }

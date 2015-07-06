@@ -1,6 +1,8 @@
 *.js
+*.c~
 *.c.txt
 lex.yy.c
-traductor.exe
+*traductor
+*traductor.exe
 traductor.tab.c
 traductor.tab.h
