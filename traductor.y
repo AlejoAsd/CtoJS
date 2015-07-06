@@ -225,7 +225,7 @@ declaration
 		fprintf(yysalida, ";\n");
 						
 	}
-	| declaration_specifiers init_declarator_list error { yyerror("Msj: Falta un \";\". "); yyerrok; }
+	| declaration_specifiers init_declarator_list error { yyerror("Falta un \";\". "); yyerrok; }
 	;
 
 declaration_specifiers
@@ -333,7 +333,7 @@ compound_statement
 	| '{' { fprintf(yysalida, "{\n"); } statement_list '}' { fprintf(yysalida, "}\n"); }
 	/*| '{' { fprintf(yysalida, "{\n"); } declaration_list '}' { fprintf(yysalida, "}\n"); }*/
 	| '{' { fprintf(yysalida, "{\n"); } declaration_list statement_list '}' { fprintf(yysalida, "}\n"); }
-	| '{' error { yyerror("Msj: Falta un \"}\"."); yyerrok; }
+	| '{' error { yyerror("Falta un \"}\"."); yyerrok; }
 	;
 
 declaration_list
@@ -373,8 +373,8 @@ jump_statement
 	| BREAK { fprintf(yysalida, "break"); } ';' { fprintf(yysalida, ";\n"); }
 	| RETURN { fprintf(yysalida, "return"); } ';' { fprintf(yysalida, ";\n"); }
 	| RETURN { fprintf(yysalida, "return "); } expression ';' { fprintf(yysalida, ";\n"); }
-	| CONTINUE error { yyerror("Msj: Falta un \";\" despues de continue en la sentencia."); yyerrok; }
-	| BREAK error { yyerror ("Msj: Falta un \";\" despues de break en la sentencia."); yyerrok;}
+	| CONTINUE error { yyerror("Falta un \";\" despues de continue en la sentencia."); yyerrok; }
+	| BREAK error { yyerror("Falta un \";\" despues de break en la sentencia."); yyerrok;}
 	;
 
 external_declaration
@@ -392,7 +392,7 @@ function_definition
 		}
 		else
 		{
-			printf("Error: Funcion declarada anteriormente.");
+			printf("Funcion declarada anteriormente.");
 			yyerrok;
 		}
 	}
@@ -414,7 +414,7 @@ yyerror(s)
 char *s;
 {
 	error=1;
-	printf("%s: Linea %d cerca de --> %s\n", s, yylineno, yylval.nombre);
+	printf("Error en la línea %d cerca de \"%s\": %s\n", yylineno, yylval.nombre, s);
 }
 
 symrec * putsym(sym_name, sym_type, b_function)
