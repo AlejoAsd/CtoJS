@@ -1,5 +1,4 @@
-    /********************************************** DEFINICIONES **********************************************/
-
+/* Definiciones */
 D           [0-9]
 L           [a-zA-Z_]
 H           [a-fA-F0-9]
@@ -7,6 +6,7 @@ E           [Ee][+-]?{D}+
 FS          (f|F|l|L)
 IS          (u|U|l|L)*
 
+/* Header */
 %{
 
 #include <stdio.h>
@@ -16,19 +16,19 @@ IS          (u|U|l|L)*
 
 #include "traductor.tab.h"
 
-/*Data type for links in the chain of symbols*/
+/*Estructura de datos para links en lookahead cadena de símbolos*/
 struct symrec
 {
-    char *name;         /* name of symbol */
-    int type;           /* type of symbol */
-    double value;               /* value of a VAR */
+    char *name;             /* nombre del símbolo */
+    int type;               /* tipo del símbolo */
+    double value;           /* valor de lookahead variable */
     int function;
-    struct symrec *next;        /* link field */
+    struct symrec *next;    /* puntero al próximo registro */
 };
 
 typedef struct symrec symrec;
 
-/*The symbol table: a chain of 'struct symrec'*/
+/*Tabla de símbolos*/
 extern symrec *sym_table;
 
 symrec *putsym ();
@@ -38,14 +38,14 @@ int yylineno;
 void comentario(void);
 void comentariolinea(void);
 void count();
+
 %}
 
-    /********************************************** REGLAS **********************************************/
-
+/* Definición de tokens */
 %%
-"/*"			{ comentario(); }
-"//"			{ comentariolinea(); }
-"#include ""<"((_|{L}*)"."{L}*)">"	{ /* vacio */ }
+"/*"            { comentario(); }
+"//"            { comentariolinea(); }
+"#include ""<"((_|{L}*)"."{L}*)">"  { /* vacio */ }
 "const"         { return(CONST); }
 
 "char"          { yylval.tipo = CHAR; return(CHAR); }
@@ -58,84 +58,82 @@ void count();
 "unsigned"      { yylval.tipo = UNSIGNED; return(UNSIGNED); }
 "void"          { yylval.tipo = VOID; return(VOID); }
 
-"continue"		{ return CONTINUE; }
-"default"		{ return DEFAULT; }
-"do"			{ return DO; }
-"if"			{ return IF; }
-"else"			{ return ELSE; }
-"switch"		{ return SWITCH; }
-"case"			{ return CASE; }
-"for"			{ return FOR; }
-"while"			{ return WHILE; }
-"return"		{ return RETURN; }
-"break"			{ return BREAK; }
+"continue"      { return CONTINUE; }
+"default"       { return DEFAULT; }
+"do"            { return DO; }
+"if"            { return IF; }
+"else"          { return ELSE; }
+"switch"        { return SWITCH; }
+"case"          { return CASE; }
+"for"           { return FOR; }
+"while"         { return WHILE; }
+"return"        { return RETURN; }
+"break"         { return BREAK; }
 
-{L}({L}|{D})*	{ yylval.nombre = strdup(yytext); return(IDENTIFIER); }
-0[xX]{H}+{IS}?		{ yylval.nombre = strdup(yytext); return(CONSTANT); }
-0{D}+{IS}?		{ yylval.nombre = strdup(yytext); return(CONSTANT); }
-{D}+{IS}?		{ yylval.nombre = strdup(yytext); return(CONSTANT); }
-L?'(\\.|[^\\'])+'	{ yylval.nombre = strdup(yytext); return(CONSTANT); }
+{L}({L}|{D})*   { yylval.nombre = strdup(yytext); return(IDENTIFIER); }
+0[xX]{H}+{IS}?      { yylval.nombre = strdup(yytext); return(CONSTANT); }
+0{D}+{IS}?      { yylval.nombre = strdup(yytext); return(CONSTANT); }
+{D}+{IS}?       { yylval.nombre = strdup(yytext); return(CONSTANT); }
+L?'(\\.|[^\\'])+'   { yylval.nombre = strdup(yytext); return(CONSTANT); }
 
-(-)?{D}+{E}{FS}?		{ yylval.nombre = strdup(yytext); return(CONSTANT); }
-(-)?{D}*"."{D}+({E})?{FS}?	{ yylval.nombre = strdup(yytext); return(CONSTANT); }
-(-)?{D}+"."{D}*({E})?{FS}?	{ yylval.nombre = strdup(yytext); return(CONSTANT); }
+(-)?{D}+{E}{FS}?        { yylval.nombre = strdup(yytext); return(CONSTANT); }
+(-)?{D}*"."{D}+({E})?{FS}?  { yylval.nombre = strdup(yytext); return(CONSTANT); }
+(-)?{D}+"."{D}*({E})?{FS}?  { yylval.nombre = strdup(yytext); return(CONSTANT); }
 
-">>="			{ return(RIGHT_ASSIGN); }
-"<<="			{ return(LEFT_ASSIGN); }
-"+="			{ return(ADD_ASSIGN); }
-"-="			{ return(SUB_ASSIGN); }
-"*="			{ return(MUL_ASSIGN); }
-"/="			{ return(DIV_ASSIGN); }
-"%="			{ return(MOD_ASSIGN); }
-"&="			{ return(AND_ASSIGN); }
-"^="			{ return(XOR_ASSIGN); }
-"|="			{ return(OR_ASSIGN); }
-">>"			{ return(RIGHT_OP); }
-"<<"			{ return(LEFT_OP); }
-"++"			{ return(INC_OP); }
-"--"			{ return(DEC_OP); }
-"&&"			{ return(AND_OP); }
-"||"			{ return(OR_OP); }
-"<="			{ return(LE_OP); }
-">="			{ return(GE_OP); }
+">>="           { return(RIGHT_ASSIGN); }
+"<<="           { return(LEFT_ASSIGN); }
+"+="            { return(ADD_ASSIGN); }
+"-="            { return(SUB_ASSIGN); }
+"*="            { return(MUL_ASSIGN); }
+"/="            { return(DIV_ASSIGN); }
+"%="            { return(MOD_ASSIGN); }
+"&="            { return(AND_ASSIGN); }
+"^="            { return(XOR_ASSIGN); }
+"|="            { return(OR_ASSIGN); }
+">>"            { return(RIGHT_OP); }
+"<<"            { return(LEFT_OP); }
+"++"            { return(INC_OP); }
+"--"            { return(DEC_OP); }
+"&&"            { return(AND_OP); }
+"||"            { return(OR_OP); }
+"<="            { return(LE_OP); }
+">="            { return(GE_OP); }
 "=="            { return(EQ_OP); }
-"!="			{ return(NE_OP); }
-";"				{ return(';'); }
-","				{ return(','); }
-("{"|"<%")		{ return('{'); }
-("}"|"%>")		{ return('}'); }
-":"				{ return(':'); }
-"="				{ return('='); }
-"("				{ return('('); }
-")"				{ return(')'); }
-("["|"<:")		{ return('['); }
-("]"|":>")		{ return(']'); }
-"."				{ return('.'); }
-"&"				{ return('&'); }
-"!"				{ return('!'); }
-"~"				{ return('~'); }
-"-"				{ return('-'); }
-"+"				{ return('+'); }
-"*"				{ return('*'); }
-"/"				{ return('/'); }
-"%"				{ return('%'); }
-"<"				{ return('<'); }
-">"				{ return('>'); }
-"^"				{ return('^'); }
-"|"				{ return('|'); }
-"?"				{ return('?'); }
+"!="            { return(NE_OP); }
+";"             { return(';'); }
+","             { return(','); }
+("{"|"<%")      { return('{'); }
+("}"|"%>")      { return('}'); }
+":"             { return(':'); }
+"="             { return('='); }
+"("             { return('('); }
+")"             { return(')'); }
+("["|"<:")      { return('['); }
+("]"|":>")      { return(']'); }
+"."             { return('.'); }
+"&"             { return('&'); }
+"!"             { return('!'); }
+"~"             { return('~'); }
+"-"             { return('-'); }
+"+"             { return('+'); }
+"*"             { return('*'); }
+"/"             { return('/'); }
+"%"             { return('%'); }
+"<"             { return('<'); }
+">"             { return('>'); }
+"^"             { return('^'); }
+"|"             { return('|'); }
+"?"             { return('?'); }
 
-[ \t\v\f]		{ count(); }
-\n				{ ++yylineno; }
-.				{ /* Se ignoran caracteres no reconocidos */ }
+[ \t\v\f]       { count(); }
+\n              { ++yylineno; }
+.               { /* Se ignoran caracteres no reconocidos */ }
 
 %%
 
-    /********************************************** FUNCIONES **********************************************/
-
 yywrap()
 {
-	return(1);
+    return(1);
 }
 
 
@@ -143,50 +141,65 @@ int column = 0;
 
 void count()
 {
-	int i;
+    int i;
 
-	for (i = 0; yytext[i] != '\0'; i++)
-		if (yytext[i] == '\n')
-			column = 0;
-		else if (yytext[i] == '\t')
-			column += 8 - (column % 8);
-		else
-			column++;
+    for (i = 0; yytext[i] != '\0'; i++)
+    {
+        if (yytext[i] == '\n')
+        {
+            column = 0;
+        }
+        else if (yytext[i] == '\t')
+        {
+            column += 8 - (column % 8);
+        }
+        else
+        {
+            column++;
+        }
+    }
 }
 
-/* Para comentarios de mas de una linea */
+// Adelanta el cursor hasta terminar un comentario multilínea
 void comentario(void)
 {
-    int c1, c2; //se declaran las variables c1, c2
-    c1 = input(); //se guarda en c1 un caracter
-    c2 = input(); //se guarda en c2 el siguiente caracter
-    while (c2 != EOF && !(c1 == '*' && c2 == '/')) 
+    // Guardar el caracter actual
+    int cursor = input();
+    // Guardar el lookahead
+    int lookahead = input();
+
+    while (lookahead != EOF && !(cursor == '*' && lookahead == '/')) 
     {
-            if (c1 == '\n')
-                ++yylineno; //contador de lineas + 1
-            c1 = c2; //va avanzando el lookahead
-            c2 = input(); //c2 toma valor de un nuevo caracter
+        // Incrementar el contador de líneas si corresponde
+        if (cursor == '\n')
+            ++yylineno;
+        // Avanzar lookahead posición del cursor y el lookahead
+        cursor = lookahead; 
+        lookahead = input();
     }
-    if( c2 == EOF ){
-        printf("Falta cerrar el comentario.\n");
+
+    // Asegurar que se cierre el comentario
+    if(lookahead == EOF)
+    {
+        printf("No se cerró el comentario.\n");
     }
 }
 
-
-/* Borrar los comentarios de linea */
+// Adelanta el cursor hasta terminar un comentario de línea
 void comentariolinea()
 {
-    int cursor; //lookahead
+    // Cursor
+    int cursor = input();
 
-    cursor = input(); //se recibe un caracter
-
-    while (cursor != '\n' && cursor != EOF){
-        //en caso de no ser un salto de linea o EOF se toma otro caracter
+    // Recorrer lookahead línea hasta encontrar el salto de línea
+    while (cursor != '\n' && cursor != EOF)
+    {
         cursor = input();
     }
 
-    //en caso de ser salto de linea, se aumenta en 1 el contador de lineas
-    if(cursor == '\n'){
-        ++yylineno;
+    // Aumentar el contador de líneas si corresponde
+    if(cursor == '\n')
+    {
+        yylineno += 1;
     }
 }

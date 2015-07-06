@@ -1,8 +1,9 @@
 int suich(int a,int b,int c)
 {
-	float x=12.5;
-	float y=10.0;
-	float z=x+y;
+	float x=12.5, y=10.0, z;
+	int p1 = 0, p2 = 1;
+
+	z = x + y;
 
 	if (p1 == p2)
 	{

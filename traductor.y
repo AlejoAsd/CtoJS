@@ -1,22 +1,20 @@
-	/********************************************** DEFINICIONES **********************************************/
-
 %{
 #include <stdio.h>
 #include <string.h>
 
-/*Data type for links in the chain of symbols*/
+/*Estructura de datos para links en lookahead cadena de símbolos*/
 struct symrec
 {
-	char *name;			/* name of symbol */
-	int type;			/* type of symbol */
-	double value;				/* value of a VAR */
-	int function;
-	struct symrec *next;		/* link field */
+    char *name;             /* nombre del símbolo */
+    int type;               /* tipo del símbolo */
+    double value;           /* valor de lookahead variable */
+    int function;
+    struct symrec *next;    /* puntero al próximo registro */
 };
 
 typedef struct symrec symrec;
 
-/*The symbol table: a chain of 'struct symrec'*/
+/*Tabla de símbolos*/
 extern symrec *sym_table;
 
 symrec *putsym ();
@@ -37,18 +35,13 @@ symrec *s;
 symrec *symtable_set_type;
 
 int esFuncion=0;
-// Booleano cuando se encuentra error 
-int sin_error=1;
-// Manejo de corchetes para vectores
-int corchete=0;
-// Para manejo de tamano de vector
-int tam_vector=0;
-// Para manejo de array multidimensional 
-int cant_corchetes=0;
+// Bandera de error
+int error=0;
 
 %}
 
-%union {
+%union 
+{
 	int tipo;
 	double val;
 	char *nombre;
@@ -65,8 +58,9 @@ int cant_corchetes=0;
 %token <tipo> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOID
 
 %type <tipo> type_specifier declaration_specifiers type_qualifier
-%type <nombre> direct_declarator declarator init_declarator init_declarator_list function_definition 
+%type <nombre> init_direct_declarator direct_declarator declarator init_declarator init_declarator_list function_definition 
 %type <nombre> parameter_type_list parameter_list parameter_declaration array_list array_declaration
+%type <nombre> initializer initializer_list
 %type <tptr> declaration 
 
 %left INC_OP DEC_OP
@@ -75,8 +69,6 @@ int cant_corchetes=0;
 %nonassoc ELSE
 
 %start translation_unit
-
-	/********************************************** REGLAS **********************************************/
 
 %%
 primary_expression
@@ -230,14 +222,7 @@ declaration
 				symtable_set_type->type=$1;
 			}
 		}
-		if (cant_corchetes==1 && corchete==1)
-		{
-			fprintf(yysalida, " );\n");
-			cant_corchetes=0;
-			corchete=0;
-		}
-		else
-			fprintf(yysalida, ";\n");
+		fprintf(yysalida, ";\n");
 						
 	}
 	| declaration_specifiers init_declarator_list error { yyerror("Msj: Falta un \";\". "); yyerrok; }
@@ -261,30 +246,28 @@ init_declarator
 		s = getsym($1);
 		if (s==(symrec *)0)
 		{
-			//printf("Empty variable declarator.\n");
 			s = putsym($1, -1, 0);
 		}
 		else
 		{
-			//printf("Error: Variable declarada anteriormente.\n");
+			printf("Error: Variable declarada anteriormente.\n");
 			yyerrok;	
 		}
 	}
-	| declarator	
+	| init_direct_declarator	
 	{
 		s = getsym($1);
 		if(s==(symrec *)0)
 		{
-			//printf("Non empty variable declarator.\n");
 			s = putsym($1, -1, 0);
 		}
 		else
 		{
-			//printf("Error: Variable declarada anteriormente.\n");
+			printf("Error: Variable declarada anteriormente.\n");
 			yyerrok;	
 		}
 	}
-	'=' { if (corchete==0) fprintf(yysalida, "="); } initializer 
+	'=' initializer { fprintf(yysalida, "%s", $4); }
 	;
 
 type_specifier
@@ -309,6 +292,12 @@ direct_declarator
 	| IDENTIFIER array_list { if (!esFuncion) fprintf(yysalida, "var %s = [%s]", $1, $2); else esFuncion = 0; }
 	| IDENTIFIER '(' ')' { if (!esFuncion) fprintf(yysalida, "function %s()", $1); else esFuncion = 0; }
 	| IDENTIFIER '(' parameter_type_list ')' { if (!esFuncion) fprintf(yysalida, "function %s(%s)", $1, $3); else esFuncion = 0; }
+	;
+
+init_direct_declarator
+	: IDENTIFIER { if (!esFuncion) fprintf(yysalida, "var %s = ", $1); else esFuncion = 0; }
+	| IDENTIFIER array_declaration { if (!esFuncion) fprintf(yysalida, "var %s = ", $1); else esFuncion = 0; }
+	| IDENTIFIER array_list { if (!esFuncion) fprintf(yysalida, "var %s = ", $1); else esFuncion = 0; }
 	;
 
 array_list
@@ -336,7 +325,6 @@ parameter_declaration
 		s = getsym($3);
 	    if(s==(symrec *)0)
 	    {
-	        //printf("Parameter_declaration.\n");
 	        s = putsym($3, $2, 0);
 	    }
 	    else
@@ -350,13 +338,14 @@ parameter_declaration
 	;
 
 initializer_list
-: initializer
-	| initializer_list ',' { fprintf(yysalida, " ,"); } initializer
+	: initializer
+	| initializer_list ',' initializer { asprintf(&$$, "%s, %s", $1, $3); }
 	;
 
 initializer
-	:  assignment_expression /*primary_expression*/ 
-	| '{' initializer_list '}'
+	: IDENTIFIER /*primary_expression*/ 
+	| CONSTANT
+	| '{' initializer_list '}' { asprintf(&$$, "[%s]", $2); }
 	;
 
 type_qualifier
@@ -437,12 +426,11 @@ function_definition
 		s = getsym($2);
 		if(s==(symrec *)0)
 		{
-			//printf("Function_definition.\n");
 			s = putsym($2,$1,1);
 		}
 		else
 		{
-			//printf("Error: Funcion declarada anteriormente.");
+			printf("Error: Funcion declarada anteriormente.");
 			yyerrok;
 		}
 	}
@@ -455,15 +443,15 @@ translation_unit
 	| translation_unit external_declaration
 	;
 
-	/********************************************** FUNCIONES **********************************************/
-
 %%
+
+
 #include <stdio.h>
 
 yyerror(s)
 char *s;
 {
-	sin_error=0;
+	error=1;
 	printf("%s: Linea %d cerca de --> %s\n", s, yylineno, yylval.nombre);
 }
 
@@ -495,14 +483,15 @@ symrec * getsym(sym_name)
 	for(ptr = sym_table; ptr != (symrec*)0; ptr = (symrec *)ptr->next)
 		if(strcmp(ptr->name, sym_name) == 0)
 		{
-			//printf("simbolo: %s\n", ptr->name);
 			return ptr;
 		}
 	return 0;
 }
 
-const char *tipo_id(int tipo){
-	switch(tipo){
+const char *tipo_id(int tipo)
+{
+	switch(tipo)
+	{
 		case(282):
 			return "CHAR";
 		case(283):
@@ -528,8 +517,10 @@ const char *tipo_id(int tipo){
 	}
 }
 
-const char *tipo_var(int tipo){
-	switch(tipo){
+const char *tipo_var(int tipo)
+{
+	switch(tipo)
+	{
 		case(1):
 			return "Funcion";
 		case(0):
@@ -539,12 +530,9 @@ const char *tipo_var(int tipo){
 	}
 }
 
-/*---------------------------------------------------------------*
-*							  MAIN                               *
-*----------------------------------------------------------------*/
 int main(int argc,char **argv)
 {
-	/* Debe tener 3 parametros, ejecutable.exe /path/to/fuente.c /path/to/objeto.js */
+	// Debe tener 3 parametros, ejecutable.exe /path/to/fuente.c /path/to/objeto.js
 	if (argc<3)
 	{
 		printf("Modo incorrecto de uso\nSintaxis: %s archivo.c archivo.js\n", argv[0]);
@@ -560,30 +548,22 @@ int main(int argc,char **argv)
 		printf("No se pudo abrir el archivo para escritura.\n");
                 return 0;
 	}
-	
-	fprintf(yysalida, "\n");//BORRAR especifico de php
+
+	// Iniciar la traducción
 	yyparse();
-	fprintf(yysalida, "\n");//BORRAR especifico de php
+
+	// Cerrar los archivos de lectura y escritura
 	fclose(yyin);
 	fclose(yysalida);
 	
-	if(sin_error)
-		printf("\n***La traducción del archivo %s ha sido finalizada***\nArchivo traducido destino => %s\n", argv[1], argv[2]);
-	else
-		printf("\nNo se pudo finalizar la traducción.\n");
-
-	/*FILE *simbolos;
-	strcat(argv[1], ".txt");
-	simbolos=fopen(argv[1], "w+");
-	symrec * ptr_table;
-	fprintf(simbolos, "NOMBRE, TIPO, VARIABLE O FUNCION.\n");
-	for(ptr_table = sym_table; ptr_table!=(symrec *)0; ptr_table=(symrec *)ptr_table->next)
+	if(error)
 	{
-		fprintf(simbolos, "\t%s, %d, %s\n", ptr_table->name,
-			ptr_table->type, 
-			tipo_var(ptr_table->function));
+		printf("\nSe encontraron errores al realizar la traducción del archivo: %s\n", argv[1]);
 	}
-	fclose(simbolos);*/
+	else
+	{
+		printf("\nTraducción exitosa del archivo: %s\nArchivo traducido: %s\n", argv[1], argv[2]);
+	}
 
 	return 0;
 }
